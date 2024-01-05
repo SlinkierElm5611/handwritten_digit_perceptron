@@ -17,6 +17,26 @@ class IDXDataset:
         self.data: list[int] = list(unzipped_data[self.dimensions * 4 + 4 :])
 
 
+def multiply_matrix_matrix(
+    matrix1: list[list[float]], matrix2: list[list[float]]
+) -> list[list[float]]:
+    return [
+        [
+            sum(matrix1[i][k] * matrix2[k][j] for k in range(len(matrix2)))
+            for j in range(len(matrix2[0]))
+        ]
+        for i in range(len(matrix1))
+    ]
+
+def add_matrix_matrix(
+    matrix1: list[list[float]], matrix2: list[list[float]]
+) -> list[list[float]]:
+    return [
+        [matrix1[i][j] + matrix2[i][j] for j in range(len(matrix1[0]))]
+        for i in range(len(matrix1))
+    ]
+
+
 class Network:
     """
     A neural network class which takes in layer configuration to create and train network
@@ -90,16 +110,12 @@ class Network:
 
 
 def main():
-    training_images: IDXDataset = IDXDataset(file_name="train-images-idx3-ubyte.gz")
-    print(training_images)
-    training_labels: IDXDataset = IDXDataset(file_name="train-labels-idx1-ubyte.gz")
-    print(training_labels)
-    test_images: IDXDataset = IDXDataset(file_name="t10k-images-idx3-ubyte.gz")
-    print(test_images)
-    test_labels: IDXDataset = IDXDataset(file_name="t10k-labels-idx1-ubyte.gz")
-    print(test_labels)
-    network: Network = Network(layers=[784, 16, 16, 10])
-    network.train(training_images=training_images, training_labels=training_labels)
+     training_images: IDXDataset = IDXDataset(file_name="train-images-idx3-ubyte.gz")
+     training_labels: IDXDataset = IDXDataset(file_name="train-labels-idx1-ubyte.gz")
+     test_images: IDXDataset = IDXDataset(file_name="t10k-images-idx3-ubyte.gz")
+     test_labels: IDXDataset = IDXDataset(file_name="t10k-labels-idx1-ubyte.gz")
+     network: Network = Network(layers=[784, 16, 16, 10])
+     network.train(training_images=training_images, training_labels=training_labels)
 
 
 if __name__ == "__main__":
