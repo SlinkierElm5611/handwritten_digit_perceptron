@@ -12,6 +12,7 @@ def main():
     test_labels: IDXDataset = IDXDataset(file_name="t10k-labels-idx1-ubyte.gz")
     network: Network = Network(layers=[784, 16, 16, 10])
     network.train(training_images=training_images, training_labels=training_labels)
+    print(network.test(test_images=test_images, test_labels=test_labels))
 
 
 if __name__ == "__main__":

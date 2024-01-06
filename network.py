@@ -20,7 +20,7 @@ class Network:
     def __init__(self, layers: list[int]):
         self.layers: list[int] = layers
         self.weights: list[list[list[float]]] = [
-            [[random.random() for _ in range(layers[i])] for _ in range(layers[i - 1])]
+            [[random.random() for _ in range(layers[i - 1])] for _ in range(layers[i])]
             for i in range(1, len(layers))
         ]
         self.biases: list[list[list[float]]] = [
@@ -33,8 +33,8 @@ class Network:
     def derivative_squish_function(self, x: float) -> float:
         return math.exp(0.0 - x) / ((1 + math.exp(0.0 - x)) ** 2)
 
-    def feed_forward(self, input: list[float]) -> list[list[float]]:
-        activations: list[list[float]] = [input]
+    def feed_forward(self, input: list[list[float]]) -> list[list[float]]:
+        activations: list[list[float]] = [[[value] for row in input for value in row]]
         for layer in range(len(self.layers) - 1):
             weights: list[list[float]] = self.weights[layer]
             biases: list[list[float]] = self.biases[layer]
@@ -46,23 +46,26 @@ class Network:
                     self.squish_function,
                 )
             )
+        return activations
 
-        print(activations)
-
-    def prepare_training_images(self, training_images: IDXDataset) -> list[list[float]]:
+    def prepare_training_images(
+        self, training_images: IDXDataset
+    ) -> list[list[list[float]]]:
         return [
             [
-                float(
-                    training_images.data[
-                        i
-                        * training_images.dimension_sizes[1]
-                        * training_images.dimension_sizes[2]
-                        + j * training_images.dimension_sizes[2]
-                        + k
-                    ]
-                )
-                / 255.0
-                for k in range(training_images.dimension_sizes[2])
+                [
+                    float(
+                        training_images.data[
+                            i
+                            * training_images.dimension_sizes[1]
+                            * training_images.dimension_sizes[2]
+                            + j * training_images.dimension_sizes[2]
+                            + k
+                        ]
+                    )
+                    / 255.0
+                    for k in range(training_images.dimension_sizes[2])
+                ]
                 for j in range(training_images.dimension_sizes[1])
             ]
             for i in range(training_images.dimension_sizes[0])
@@ -74,18 +77,37 @@ class Network:
             for i in range(training_labels.dimension_sizes[0])
         ]
 
+    def back_propagate(
+        self, activations: list[list[float]], label: list[float]
+    ) -> tuple[list[list[list[float]]], list[list[list[float]]]]:
+        return ([] , [])
+
     def train(self, training_images: IDXDataset, training_labels: IDXDataset):
-        image_data: list[list[float]] = self.prepare_training_images(training_images)
+        image_data: list[list[list[float]]] = self.prepare_training_images(
+            training_images
+        )
         label_data: list[list[float]] = self.prepare_training_labels(training_labels)
         num_batches: int = 500
+        items_per_batch: int = len(image_data) // num_batches
         for batch in range(num_batches):
-            pass
+            gradients: list[tuple[list[list[list[float]]], list[list[list[float]]]]] = []
+            for index, (image, label) in enumerate(zip(
+                image_data[batch * items_per_batch : (batch + 1) * items_per_batch],
+                label_data[batch * items_per_batch : (batch + 1) * items_per_batch],
+                )):
+                activations: list[list[float]] = self.feed_forward(image)
+                gradients.append(self.back_propagate(activations, label))
+            number_of_gradients: int = len(gradients)
 
     def test(self, test_images: IDXDataset, test_labels: IDXDataset) -> float:
         image_data: list[list[float]] = self.prepare_training_images(test_images)
         label_data: list[list[float]] = self.prepare_training_labels(test_labels)
         total_correct: int = 0
         total_wrong: int = 0
-        for test in range(test_labels.dimensions[0]):
-            pass
-        return total_correct / (total_correct + total_wrong)
+        for image, label in zip(image_data, label_data):
+            activations: list[list[float]] = self.feed_forward(image)
+            if label.index(max(label)) == activations[-1].index(max(activations[-1])):
+                total_correct += 1
+            else:
+                total_wrong += 1
+        return float(total_correct) / float(total_correct + total_wrong)
