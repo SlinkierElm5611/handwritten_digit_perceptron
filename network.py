@@ -80,7 +80,7 @@ class Network:
     def back_propagate(
         self, activations: list[list[float]], label: list[float]
     ) -> tuple[list[list[list[float]]], list[list[list[float]]]]:
-        return ([] , [])
+        return ([], [])
 
     def train(self, training_images: IDXDataset, training_labels: IDXDataset):
         image_data: list[list[list[float]]] = self.prepare_training_images(
@@ -90,14 +90,42 @@ class Network:
         num_batches: int = 500
         items_per_batch: int = len(image_data) // num_batches
         for batch in range(num_batches):
-            gradients: list[tuple[list[list[list[float]]], list[list[list[float]]]]] = []
-            for index, (image, label) in enumerate(zip(
-                image_data[batch * items_per_batch : (batch + 1) * items_per_batch],
-                label_data[batch * items_per_batch : (batch + 1) * items_per_batch],
-                )):
+            gradients: list[
+                tuple[list[list[list[float]]], list[list[list[float]]]]
+            ] = []
+            for index, (image, label) in enumerate(
+                zip(
+                    image_data[batch * items_per_batch : (batch + 1) * items_per_batch],
+                    label_data[batch * items_per_batch : (batch + 1) * items_per_batch],
+                )
+            ):
                 activations: list[list[float]] = self.feed_forward(image)
                 gradients.append(self.back_propagate(activations, label))
             number_of_gradients: int = len(gradients)
+            for i in range(len(gradients[0])):
+                for j in range(len(gradients[0][i])):
+                    for k in range(len(gradients[0][i][j])):
+                        self.weights[i][j][k] += (
+                            sum(
+                                [
+                                    gradients[0][i][j][k][l]
+                                    for l in range(gradients[0][i][j][k])
+                                ]
+                            )
+                            / number_of_gradients
+                        )
+            for i in range(len(gradients[1])):
+                for j in range(len(gradients[1][i])):
+                    for k in range(len(gradients[1][i][j])):
+                        self.biases[i][j][k] += (
+                            sum(
+                                [
+                                    gradients[1][i][j][k][l]
+                                    for l in range(gradients[1][i][j][k])
+                                ]
+                            )
+                            / number_of_gradients
+                        )
 
     def test(self, test_images: IDXDataset, test_labels: IDXDataset) -> float:
         image_data: list[list[float]] = self.prepare_training_images(test_images)
@@ -110,4 +138,6 @@ class Network:
                 total_correct += 1
             else:
                 total_wrong += 1
+        print(f"Total correct: {total_correct}")
+        print(f"Total wrong: {total_wrong}")
         return float(total_correct) / float(total_correct + total_wrong)
