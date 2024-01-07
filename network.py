@@ -20,11 +20,11 @@ class Network:
     def __init__(self, layers: list[int]):
         self.layers: list[int] = layers
         self.weights: list[list[list[float]]] = [
-            [[random.random() for _ in range(layers[i - 1])] for _ in range(layers[i])]
+            [[0.5 - random.random() for _ in range(layers[i - 1])] for _ in range(layers[i])]
             for i in range(1, len(layers))
         ]
         self.biases: list[list[list[float]]] = [
-            [[random.random()] for _ in range(layer)] for layer in layers[1:]
+            [[0.5 - random.random()] for _ in range(layer)] for layer in layers[1:]
         ]
 
     def squish_function(self, x: float) -> float:
@@ -80,7 +80,22 @@ class Network:
     def back_propagate(
         self, activations: list[list[float]], label: list[float]
     ) -> tuple[list[list[list[float]]], list[list[list[float]]]]:
-        return ([], [])
+        return (
+            [
+                [
+                    [0.5 - random.random() for _ in range(len(self.weights[i][j]))]
+                    for j in range(len(self.weights[i]))
+                ]
+                for i in range(len(self.weights))
+            ],
+            [
+                [
+                    [0.5 - random.random() for _ in range(len(self.biases[i][j]))]
+                    for j in range(len(self.biases[i]))
+                ]
+                for i in range(len(self.biases))
+            ],
+        )
 
     def train(self, training_images: IDXDataset, training_labels: IDXDataset):
         image_data: list[list[list[float]]] = self.prepare_training_images(
@@ -102,25 +117,27 @@ class Network:
                 activations: list[list[float]] = self.feed_forward(image)
                 gradients.append(self.back_propagate(activations, label))
             number_of_gradients: int = len(gradients)
-            for i in range(len(gradients[0])):
-                for j in range(len(gradients[0][i])):
-                    for k in range(len(gradients[0][i][j])):
+            for i in range(len(self.weights)):
+                for j in range(len(self.weights[i])):
+                    for k in range(len(self.weights[i][j])):
                         self.weights[i][j][k] += (
                             sum(
                                 [
-                                    gradients[0][i][j][k][l]
-                                    for l in range(gradients[0][i][j][k])
+                                    gradients[index][0][i][j][k]
+                                    for index in range(number_of_gradients)
                                 ]
                             )
                             / number_of_gradients
                         )
-            for i in range(len(gradients[1])):
-                for j in range(len(gradients[1][i])):
-                    for k in range(len(gradients[1][i][j])):
+            for i in range(len(self.biases)):
+                for j in range(len(self.biases[i])):
+                    for k in range(len(self.biases[i][j])):
                         self.biases[i][j][k] += (
                             sum(
-                                    gradients[1][i][j][k][l]
-                                    for l in range(gradients[1][i][j][k])
+                                [
+                                    gradients[index][1][i][j][k]
+                                    for index in range(number_of_gradients)
+                                ]
                             )
                             / number_of_gradients
                         )
