@@ -119,10 +119,8 @@ class Network:
                     for k in range(len(gradients[1][i][j])):
                         self.biases[i][j][k] += (
                             sum(
-                                [
                                     gradients[1][i][j][k][l]
                                     for l in range(gradients[1][i][j][k])
-                                ]
                             )
                             / number_of_gradients
                         )
