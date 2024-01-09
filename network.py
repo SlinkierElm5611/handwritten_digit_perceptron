@@ -31,7 +31,10 @@ class Network:
         ]
 
     def squish_function(self, x: float) -> float:
-        return 1 / (1 + math.exp(0.0 - x))
+        return 1.0 / (1.0 + math.exp(0.0 - x))
+
+    def inverse_squish_function(self, x: float) -> float:
+        return -math.log(1.0 / x - 1.0)
 
     def derivative_squish_function(self, x: float) -> float:
         return math.exp(0.0 - x) / ((1 + math.exp(0.0 - x)) ** 2)
@@ -93,21 +96,49 @@ class Network:
         activation_cost_gradients: list[list[list[float]]] = []
         weight_cost_gradients: list[list[list[float]]] = []
         bias_cost_gradients: list[list[list[float]]] = []
-        for layer in range(len(self.layers) - 1):
-            if layer == 0:
+        for layer in range(1, len(self.layers)):
+            if layer == 1:
                 activation_cost_gradients.append(
                     [
-                        [self.partial_derivative_cost_function_to_output_layer(x[0], y)]
+                        [
+                            0.0
+                            - (
+                                self.derivative_squish_function(
+                                    self.inverse_squish_function(x[0])
+                                )
+                                * self.partial_derivative_cost_function_to_output_layer(
+                                    x[0], y
+                                )
+                            )
+                        ]
                         for x, y in zip(activations[-1], label)
                     ]
                 )
-            if layer > 0:
-                activation_cost_gradients.append(
+            else:
+                activation_cost_gradients.insert(
+                    0,
                     [
-                        [sum([value for value in weight_cost_gradients[-layer][i]])]
+                        [
+                            self.derivative_squish_function(
+                                self.inverse_squish_function(activations[-layer][i][0])
+                            )
+                            * sum(weight_cost_gradients[-layer + 1][i])
+                        ]
                         for i in range(self.layers[-layer])
-                    ]
+                    ],
                 )
+                # TODO: Address issue with dimensions being used in theactivation_cost_gradients after first layer
+            weight_cost_gradients.insert(
+                0,
+                [
+                    [
+                        activations[-layer - 1][i][0]
+                        * activation_cost_gradients[-layer][j][0]
+                        for i in range(self.layers[-layer - 1])
+                    ]
+                    for j in range(self.layers[-layer])
+                ],
+            )
 
         return (
             [
