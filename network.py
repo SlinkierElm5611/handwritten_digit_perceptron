@@ -166,7 +166,7 @@ class Network:
             training_images
         )
         label_data: list[list[float]] = self.prepare_training_labels(training_labels)
-        num_batches: int = 600
+        num_batches: int = 1875
         items_per_batch: int = len(image_data) // num_batches
         epochs: int = 10
         for epoch in range(epochs):
