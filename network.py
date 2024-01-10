@@ -123,16 +123,20 @@ class Network:
                     0,
                     [
                         [
-                            self.derivative_squish_function(
-                                self.inverse_squish_function(activations[-layer][i][0])
+                            sum(
+                                activation_cost_gradients[-layer + 1][j][0]
+                                * self.weights[-layer + 1][j][i]
+                                * self.derivative_squish_function(
+                                    self.inverse_squish_function(
+                                        activations[-layer][i][0]
+                                    )
+                                )
+                                for j in range(self.layers[-layer + 1])
                             )
-                            * sum(weight_cost_gradients[-layer + 1][j])
-                            for j in range(self.layers[-layer + 1])
                         ]
                         for i in range(self.layers[-layer])
                     ],
                 )
-                # TODO: Address issue with dimensions being used in theactivation_cost_gradients after first layer
             weight_cost_gradients.insert(
                 0,
                 [
@@ -157,7 +161,6 @@ class Network:
             bias_cost_gradients,
         )
 
-
     def train(self, training_images: IDXDataset, training_labels: IDXDataset):
         image_data: list[list[list[float]]] = self.prepare_training_images(
             training_images
@@ -174,8 +177,12 @@ class Network:
                 ] = []
                 for index, (image, label) in enumerate(
                     zip(
-                        image_data[batch * items_per_batch : (batch + 1) * items_per_batch],
-                        label_data[batch * items_per_batch : (batch + 1) * items_per_batch],
+                        image_data[
+                            batch * items_per_batch : (batch + 1) * items_per_batch
+                        ],
+                        label_data[
+                            batch * items_per_batch : (batch + 1) * items_per_batch
+                        ],
                     )
                 ):
                     activations: list[list[list[float]]] = self.feed_forward(image)
